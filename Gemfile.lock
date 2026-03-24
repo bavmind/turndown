@@ -1,0 +1,38 @@
+PATH
+  remote: .
+  specs:
+    turndown-ruby (0.1.0)
+      nokogiri (>= 1.16)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    drb (2.2.3)
+    minitest (6.0.2)
+      drb (~> 2.0)
+      prism (~> 1.5)
+    nokogiri (1.19.2-arm64-darwin)
+      racc (~> 1.4)
+    prism (1.9.0)
+    racc (1.8.1)
+    rake (13.3.1)
+
+PLATFORMS
+  arm64-darwin
+
+DEPENDENCIES
+  minitest (>= 5.20)
+  rake (>= 13.0)
+  turndown-ruby!
+
+CHECKSUMS
+  drb (2.2.3)
+  minitest (6.0.2)
+  nokogiri (1.19.2-arm64-darwin)
+  prism (1.9.0)
+  racc (1.8.1)
+  rake (13.3.1)
+  turndown-ruby (0.1.0)
+
+BUNDLED WITH
+  4.0.8

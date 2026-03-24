@@ -1,0 +1,12 @@
+require "nokogiri"
+
+require_relative "turndown/version"
+require_relative "turndown/utilities"
+require_relative "turndown/rule"
+require_relative "turndown/rules"
+require_relative "turndown/node"
+require_relative "turndown/collapse_whitespace"
+require_relative "turndown/root_node"
+require_relative "turndown/commonmark_rules"
+require_relative "turndown/converter"
+require_relative "turndown/plugins/gfm"
