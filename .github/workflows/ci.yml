@@ -15,17 +15,10 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         ruby: ["3.3", "3.4", "4.0"]
-        experimental: [false]
         include:
           # Cover a second platform on the primary Ruby.
           - os: macos-latest
             ruby: "4.0"
-            experimental: false
-          # ruby-head breaks for upstream reasons; report, don't fail the build.
-          - os: ubuntu-latest
-            ruby: head
-            experimental: true
-    continue-on-error: ${{ matrix.experimental }}
     steps:
       - uses: actions/checkout@v7
 
