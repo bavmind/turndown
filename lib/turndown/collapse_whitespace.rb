@@ -1,3 +1,10 @@
+# frozen_string_literal: true
+
+# Adapted, by way of Turndown, from collapse-whitespace by Luc Thevenard.
+#
+# Copyright (c) 2014 Luc Thevenard <lucthevenard@gmail.com>
+# Released under the MIT License. See LICENSE for the full notice.
+
 module Turndown
   module CollapseWhitespace
     module_function

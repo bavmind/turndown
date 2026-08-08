@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Turndown
   class RootNode
     ROOT_ID = "turndown-root".freeze

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Turndown
   class Node
     attr_reader :raw, :options

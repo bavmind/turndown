@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Ruby ${{ matrix.ruby }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        ruby: ["3.3", "3.4", "4.0"]
+        experimental: [false]
+        include:
+          # Cover a second platform on the primary Ruby.
+          - os: macos-latest
+            ruby: "4.0"
+            experimental: false
+          # ruby-head breaks for upstream reasons; report, don't fail the build.
+          - os: ubuntu-latest
+            ruby: head
+            experimental: true
+    continue-on-error: ${{ matrix.experimental }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
+      - name: Run tests
+        run: bundle exec rake test
+
+  build:
+    name: Build gem
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+
+      - name: Build
+        run: gem build turndown.gemspec

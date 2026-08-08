@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Turndown
   class Rule
     attr_reader :filter

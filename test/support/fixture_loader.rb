@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 module FixtureLoader
   Fixture = Struct.new(:name, :input, :expected, :options, keyword_init: true)
 
   module_function
 
   def load(path)
-    document = Nokogiri::HTML5::Document.parse(File.read(path))
+    document = Nokogiri::HTML5::Document.parse(File.read(path, encoding: "UTF-8"))
 
     document.css(".case").map do |fixture|
       Fixture.new(

@@ -1,3 +1,9 @@
+# frozen_string_literal: true
+
+# Ported from turndown-plugin-gfm by Dom Christie
+# (https://github.com/mixmark-io/turndown-plugin-gfm), released under the
+# MIT License. See LICENSE for the full notice.
+
 module Turndown
   module Plugins
     module GFM

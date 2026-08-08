@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Turndown
   module Utilities
     BLOCK_ELEMENTS = %w[

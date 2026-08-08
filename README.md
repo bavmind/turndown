@@ -1,39 +1,45 @@
-# turndown-ruby
+# Turndown
 
-A Ruby port of [Turndown](https://github.com/mixmark-io/turndown) for converting HTML to Markdown.
+[![Gem Version](https://img.shields.io/gem/v/turndown.svg)](https://rubygems.org/gems/turndown)
+[![CI](https://github.com/bavmind/turndown/actions/workflows/ci.yml/badge.svg)](https://github.com/bavmind/turndown/actions/workflows/ci.yml)
 
-This gem keeps one canonical Ruby API:
+Convert HTML to Markdown in Ruby.
 
-- `Turndown::Converter.new(options = {})`
-- `converter.convert(input)`
-- `converter.use(plugin_or_plugins)`
-- `converter.add_rule(name, filter:, replacement:, append: nil)`
-- `converter.keep(filter)`
-- `converter.remove(filter)`
-- `converter.escape(string)`
+```ruby
+Turndown::Converter.new.convert("<h1>Hello world</h1>")
+# => "Hello world\n==========="
+```
 
-The implementation is Nokogiri-backed and currently targets upstream Turndown `7.2.2` behavior, plus the bundled GFM plugin fixture corpus.
+> **This is a Ruby port of [Turndown](https://github.com/mixmark-io/turndown) by Dom Christie.**
+> It is an unofficial port, not affiliated with or endorsed by the upstream
+> JavaScript project. Conversion behavior, rule semantics, and the test fixture
+> corpus are derived from upstream Turndown `7.2.2` and
+> [turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm).
+> See [Credits](#credits).
+
+## Requirements
+
+- Ruby >= 3.3 (tracks Ruby's own maintained branches)
+- Nokogiri >= 1.16
 
 ## Installation
 
-This repository includes a gemspec, but the README assumes local or git-based usage unless and until the gem is published.
+Add it to your Gemfile:
 
 ```ruby
-# Gemfile
-gem "turndown-ruby", path: "/path/to/turndown-ruby"
+gem "turndown"
 ```
 
-Then:
+Then run:
 
-```sh
+```bash
 bundle install
 ```
 
-For development inside this repo:
+Or install it directly:
 
-```sh
-bundle install
-bundle exec rake test
+```bash
+gem install turndown
 ```
 
 ## Usage
@@ -73,28 +79,38 @@ Accepted inputs:
 - `Nokogiri` documents
 - `Nokogiri` document fragments
 
+## API
+
+- `Turndown::Converter.new(options = {})`
+- `converter.convert(input)`
+- `converter.use(plugin_or_plugins)`
+- `converter.add_rule(name, filter:, replacement:, append: nil)`
+- `converter.keep(filter)`
+- `converter.remove(filter)`
+- `converter.escape(string)`
+
+Every method except `convert` and `escape` returns the converter, so calls chain.
+
 ## Options
 
-Options use symbol keys and snake_case names:
+Options use symbol keys and snake_case names.
 
-| Option | Default |
-| :-- | :-- |
-| `heading_style` | `"setext"` |
-| `hr` | `"* * *"` |
-| `bullet_list_marker` | `"*"` |
-| `code_block_style` | `"indented"` |
-| `fence` | `"```"` |
-| `em_delimiter` | `"_"` |
-| `strong_delimiter` | `"**"` |
-| `link_style` | `"inlined"` |
-| `link_reference_style` | `"full"` |
-| `br` | `"  "` |
-| `preformatted_code` | `false` |
-| `blank_replacement` | proc |
-| `keep_replacement` | proc |
-| `default_replacement` | proc |
-
-Examples:
+| Option | Default | Notes |
+| :-- | :-- | :-- |
+| `heading_style` | `"setext"` | or `"atx"` |
+| `hr` | `"* * *"` | |
+| `bullet_list_marker` | `"*"` | or `"-"`, `"+"` |
+| `code_block_style` | `"indented"` | or `"fenced"` |
+| `fence` | ` "```" ` | or `"~~~"` |
+| `em_delimiter` | `"_"` | or `"*"` |
+| `strong_delimiter` | `"**"` | or `"__"` |
+| `link_style` | `"inlined"` | or `"referenced"` |
+| `link_reference_style` | `"full"` | or `"collapsed"`, `"shortcut"` |
+| `br` | `"  "` | |
+| `preformatted_code` | `false` | |
+| `blank_replacement` | proc | |
+| `keep_replacement` | proc | |
+| `default_replacement` | proc | |
 
 ```ruby
 converter = Turndown::Converter.new(
@@ -119,15 +135,15 @@ puts converter.convert("<strike>Hello</strike>")
 # ~Hello~
 ```
 
-Available plugin entrypoints:
+Individual plugins can be used on their own:
 
-- `Turndown::Plugins::GFM`
+- `Turndown::Plugins::GFM` — all of the below
 - `Turndown::Plugins::GFM::Strikethrough`
 - `Turndown::Plugins::GFM::Tables`
 - `Turndown::Plugins::GFM::TaskListItems`
 - `Turndown::Plugins::GFM::HighlightedCodeBlock`
 
-## Custom Rules
+## Custom rules
 
 Rules stay close to upstream Turndown, but use Ruby callables.
 
@@ -162,7 +178,7 @@ converter.keep(%w[del ins])
 converter.remove("script")
 ```
 
-### Plugin shape
+### Write a plugin
 
 Plugins are callables that receive the converter instance:
 
@@ -188,30 +204,61 @@ converter.escape("`not code`")
 # => "\\`not code\\`"
 ```
 
-## Compatibility Notes
+## Differences from the JavaScript version
 
-- This gem intentionally exposes a Ruby-first API only. It does not provide a JS-style `TurndownService#turndown` alias.
-- Nokogiri is the only parser backend in v1.
-- HTML string parsing goes through a synthetic wrapper element to keep malformed-document handling consistent inside Nokogiri.
-- Upstream parity fixtures are vendored locally under [`test/fixtures/upstream/`](test/fixtures/upstream/).
+- The API is Ruby-first. There is no `TurndownService#turndown` alias — use
+  `Turndown::Converter#convert`.
+- Options are symbol keys in snake_case (`heading_style`), not camelCase
+  (`headingStyle`).
+- Rules and plugins are Ruby callables (`Proc`, `lambda`, or anything responding
+  to `#call`) rather than JavaScript functions.
+- Nokogiri is the only supported parser backend.
 
-## Verification
+## Parity with upstream
 
-The current implementation is verified against:
+The suite runs the upstream fixture corpus directly:
 
-- 149 upstream core Turndown fixtures
-- 18 upstream GFM fixtures
-- Ruby-specific API tests for Nokogiri inputs, rule registration, plugins, and option behavior
+- 149 upstream Turndown core fixtures
+- 18 upstream turndown-plugin-gfm fixtures
+- 10 Ruby-specific tests for Nokogiri inputs, rule registration, plugins, and
+  option handling
 
-Run the suite with:
+The vendored fixture files live under `test/fixtures/upstream/`.
 
-```sh
+## Development
+
+```bash
+bundle install
 bundle exec rake test
 ```
 
-## Attribution
+## Contributing
 
-- [Turndown](https://github.com/mixmark-io/turndown) was created by Dom Christie. This gem is a Ruby port of that project’s behavior and fixture corpus.
-- [turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm) provides the upstream GFM plugin behavior mirrored here.
-- Turndown’s whitespace collapsing logic is adapted upstream from Luc Thevenard’s `collapse-whitespace` project, and this Ruby port follows that behavior as part of the port.
-- The vendored fixture files under [`test/fixtures/upstream/`](test/fixtures/upstream/) are retained as the parity corpus used by the test suite.
+Bug reports and pull requests are welcome at
+<https://github.com/bavmind/turndown>. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Because this is a port, behavior changes should generally track upstream
+Turndown. If you find a case where this gem and upstream Turndown disagree,
+that is a bug — please include the HTML input and both outputs.
+
+## Credits
+
+This gem exists because of the work of others:
+
+- **[Turndown](https://github.com/mixmark-io/turndown)** by
+  **[Dom Christie](https://github.com/domchristie)** — the original project this
+  gem ports. Its conversion rules, behavior, and fixture corpus are the
+  reference implementation here.
+- **[turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm)**,
+  also by Dom Christie, is the source of the bundled GFM plugin behavior.
+- **[collapse-whitespace](https://github.com/lucthev/collapse-whitespace)** by
+  **[Luc Thevenard](https://github.com/lucthev)** — Turndown's whitespace
+  collapsing logic is adapted from it, and this port follows that behavior.
+
+All three are MIT licensed. Their copyright notices are retained in
+[LICENSE](LICENSE).
+
+## License
+
+MIT © 2026 Devran Cosmo Uenal. Portions © 2017 Dom Christie and
+© 2014 Luc Thevenard. See [LICENSE](LICENSE).

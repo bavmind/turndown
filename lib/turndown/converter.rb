@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Turndown
   class Converter
     attr_reader :options, :rules

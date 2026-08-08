@@ -1,3 +1,11 @@
+# frozen_string_literal: true
+
+# Turndown converts HTML to Markdown.
+#
+# This is an unofficial Ruby port of Turndown by Dom Christie
+# (https://github.com/mixmark-io/turndown), released under the MIT License.
+# It is not affiliated with or endorsed by the upstream project.
+
 require "nokogiri"
 
 require_relative "turndown/version"
