@@ -85,6 +85,7 @@ Accepted inputs:
 - `converter.convert(input)`
 - `converter.use(plugin_or_plugins)`
 - `converter.add_rule(name, filter:, replacement:, append: nil)`
+- `converter.add_transform(callable = nil, &block)`
 - `converter.keep(filter)`
 - `converter.remove(filter)`
 - `converter.escape(string)`
@@ -142,6 +143,114 @@ Individual plugins can be used on their own:
 - `Turndown::Plugins::GFM::Tables`
 - `Turndown::Plugins::GFM::TaskListItems`
 - `Turndown::Plugins::GFM::HighlightedCodeBlock`
+
+Beyond the upstream port, `Turndown::Plugins::TableGrid` adds merged-cell
+and headerless-table support — see [Table grid](#table-grid).
+
+## Table grid
+
+`Turndown::Plugins::TableGrid` handles merged cells and headerless tables.
+**This is a Ruby-side extension — it has no upstream equivalent.**
+
+It renders through the GFM table rules and registers them for you, so it works
+on its own:
+
+```ruby
+converter = Turndown::Converter.new(
+  table_spans: :multimarkdown,
+  headerless_tables: :first_row_header
+)
+converter.use(Turndown::Plugins::TableGrid)
+```
+
+If you want the rest of GFM as well, load it **first** — later rules take
+precedence, so `TableGrid` has to come last:
+
+```ruby
+converter.use([Turndown::Plugins::GFM, Turndown::Plugins::TableGrid])
+```
+
+### Why it exists
+
+The GFM plugin treats each `<th>`/`<td>` as exactly one Markdown cell, so a
+`colspan` or `rowspan` silently shifts every following cell into the wrong
+column:
+
+```ruby
+# GFM alone
+"| Name | Email |\n| --- | --- |\n| Ada | a@x.com |\n| a@work.com |"
+#                                                    ^ landed under Name
+```
+
+Loading `TableGrid` resolves cells onto a logical grid and pads every row
+to the table's full width, so a value always sits in its true column.
+
+### `table_spans`
+
+Markdown has no merged cells, so the option picks how they are represented.
+
+| Value | Behavior |
+| :-- | :-- |
+| `:blank` (default) | Content sits in its true column; covered positions are left empty. Valid GFM, loses the merge. |
+| `:flatten` | The cell repeats into every position it covers. Valid GFM, redundant but self-contained. |
+| `:multimarkdown` | Row spans emit `^^`, column spans emit trailing pipes. Lossless, but needs a [MultiMarkdown](https://fletcher.github.io/MultiMarkdown-6/syntax.html#tables)-aware reader. |
+
+Given a `rowspan="2"` on `Ada`:
+
+```
+:blank                :flatten              :multimarkdown
+| Name | Email |      | Name | Email |      | Name | Email |
+| --- | --- |         | --- | --- |         | --- | --- |
+| Ada | a@x.com |     | Ada | a@x.com |     | Ada | a@x.com |
+|  | a@work.com |     | Ada | a@work.com |  | ^^ | a@work.com |
+```
+
+Choosing between them:
+
+- **`:flatten`** if rows are extracted independently — each row carries its own
+  context, so a row lifted out of the table still makes sense on its own.
+- **`:multimarkdown`** if the merge itself matters and you control the reader.
+  Note that a row containing `^^` refers to the row above it, so it cannot be
+  read in isolation.
+- **`:blank`** if you want neither invented duplicates nor non-standard syntax.
+
+They aren't exclusive. Converting the same source twice — `:flatten` for
+indexing, `:multimarkdown` for display — costs one extra pass and avoids
+parsing Markdown back into a grid later.
+
+### `headerless_tables`
+
+GFM requires a header row, so the GFM plugin keeps headerless tables as raw
+HTML. This option converts them instead.
+
+| Value | Behavior |
+| :-- | :-- |
+| `:keep` (default) | Leave as raw HTML — upstream behavior. |
+| `:blank_header` | Convert, emitting an empty header row. |
+| `:first_row_header` | Convert, promoting the first row to the header. |
+
+`:first_row_header` reads better, but it *asserts* that row one contains column
+names. For a key/value table like `Office | Berlin`, that makes "Berlin" a
+column label. Prefer `:blank_header` when you don't know the shape of the input,
+and `:first_row_header` only for sources you control.
+
+Tables that already have a header row are unaffected by this option.
+
+## Transforms
+
+Rules are matched depth-first, so by the time a rule runs, its children are
+already converted strings. A plugin that needs to restructure a subtree has to
+do it beforehand, via a transform:
+
+```ruby
+converter.add_transform do |root, options|
+  root.css("aside").each { |node| node.name = "blockquote" }
+end
+```
+
+Transforms receive the parsed tree and the options hash, and run in
+registration order before any rule. `TableGrid` uses one to build its
+table grid.
 
 ## Custom rules
 

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Converter#add_transform` — registers a callable run against the parsed tree
+  before any rule is applied, receiving `(root, options)`. Rules are matched
+  depth-first, so restructuring a subtree is not possible from a replacement.
+  Registering no transforms leaves conversion byte-identical.
+- `Turndown::Plugins::TableGrid`, a Ruby-side extension with no upstream
+  equivalent. It resolves cells onto a logical grid and pads rows to the table's
+  full width, so `colspan`/`rowspan` no longer shift following cells into the
+  wrong column. It renders through the GFM table rules and registers them
+  itself, so it works without loading the rest of GFM.
+- `table_spans` option — `:blank` (default) leaves covered positions empty;
+  `:flatten` repeats the cell into every position it covers, so each row can be
+  read on its own; `:multimarkdown` emits `^^` for row spans and trailing pipes
+  for column spans, preserving the merge for readers that understand it.
+- `headerless_tables` option — `:keep` (default) preserves upstream behavior of
+  leaving headerless tables as raw HTML; `:blank_header` and `:first_row_header`
+  convert them.
+
+Both options require `TableGrid`; they are ignored by the GFM plugin alone.
+Upstream fixture output is unchanged unless the plugin is loaded.
+
 ## [1.0.0] - 2026-08-08
 
 Initial public release.

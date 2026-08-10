@@ -8,14 +8,28 @@ module Turndown
       normalized_options = normalize_options(options)
       @options = Utilities.extend(default_options, normalized_options)
       @rules = Rules.new(@options)
+      @transforms = []
     end
 
     def convert(input)
       raise TypeError, "#{input} is not a string, or an element/document/fragment node." unless can_convert?(input)
       return "" if input == ""
 
-      output = process(RootNode.build(input, options))
-      post_process(output)
+      root = RootNode.build(input, options)
+      @transforms.each { |transform| transform.call(root, options) }
+      post_process(process(root))
+    end
+
+    # Registers a callable run against the parsed tree before any rule is
+    # applied, receiving (root, options). Rules are matched depth-first, so a
+    # plugin needing to restructure a subtree has to do it here rather than in
+    # a replacement.
+    def add_transform(callable = nil, &block)
+      transform = callable || block
+      raise TypeError, "transform must be a callable" unless transform.respond_to?(:call)
+
+      @transforms << transform
+      self
     end
 
     def use(plugin)
