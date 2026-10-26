@@ -231,6 +231,28 @@ class TableGridTest < Minitest::Test
                  convert(headerless_html, headerless_tables: :blank_header)
   end
 
+  def test_headerless_tables_with_colgroup_get_a_blank_header
+    html = table("<colgroup><col><col></colgroup>" \
+                 "<tbody><tr><td>Office</td><td>Berlin</td></tr></tbody>")
+
+    assert_equal "|  |  |\n| --- | --- |\n| Office | Berlin |",
+                 convert(html, headerless_tables: :blank_header)
+  end
+
+  def test_headerless_tables_with_caption_get_a_blank_header
+    html = table("<caption>Contacts</caption>" \
+                 "<tbody><tr><td>Office</td><td>Berlin</td></tr></tbody>")
+
+    refute_includes convert(html, headerless_tables: :blank_header), "<table>"
+  end
+
+  def test_gfm_header_row_after_colgroup_is_recognized
+    html = table("<colgroup><col><col></colgroup>" \
+                 "<tbody><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></tbody>")
+
+    assert_equal "| A | B |\n| --- | --- |\n| 1 | 2 |", gfm_only(html)
+  end
+
   def test_headerless_tables_promoting_the_first_row
     assert_equal "| Office | Berlin |\n| --- | --- |\n| Hours | 09-17 |",
                  convert(headerless_html, headerless_tables: :first_row_header)
