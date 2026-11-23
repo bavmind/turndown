@@ -140,15 +140,20 @@ module Turndown
           end
         end
 
+        # <caption> and <colgroup> may precede the first <tbody> without
+        # contributing rows, so they are skipped.
         def first_tbody?(element)
-          previous_sibling = element.previous_sibling
-          element.node_name == "TBODY" &&
+          return false unless element.node_name == "TBODY"
+
+          previous_sibling = element.raw.previous_element
+          while previous_sibling && %w[caption colgroup].include?(previous_sibling.name.downcase)
+            previous_sibling = previous_sibling.previous_element
+          end
+
+          previous_sibling.nil? ||
             (
-              previous_sibling.nil? ||
-              (
-                previous_sibling.node_name == "THEAD" &&
-                previous_sibling.text_content.match?(/\A\s*\z/)
-              )
+              previous_sibling.name.casecmp("thead").zero? &&
+              previous_sibling.text.match?(/\A\s*\z/)
             )
         end
 

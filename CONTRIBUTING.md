@@ -25,6 +25,11 @@ That shapes what makes a good contribution:
   project. Once it lands there, a port here is straightforward.
 - **Ruby-side improvements are always welcome** — performance, error messages,
   documentation, and API ergonomics are ours to own.
+- **Non-upstream behavior belongs in a plugin, off by default.** The core
+  converter and `Plugins::GFM` are ports and should stay faithful to their
+  sources. `Plugins::TableGrid` is the model: it adds behavior upstream
+  doesn't have, but only when you explicitly load it, so the parity fixtures
+  are unaffected.
 
 ## Tests
 
